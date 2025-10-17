@@ -1,8 +1,8 @@
 # Helpful debugging commands
 
--- local test
+-- local test  
 node server.js
 
--- refresh docker
+-- refresh docker  
 docker build -t location-svc .
 
