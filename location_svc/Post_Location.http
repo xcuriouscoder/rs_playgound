@@ -3,6 +3,6 @@ content-type: application/json
 userid: testuser1
 
 {
-    "latitude": 47.12345,
-    "longitude": -122.5432
+    "latitude": 47.69238024774168,
+    "longitude": -122.1468915306806
 }
