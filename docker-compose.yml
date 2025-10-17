@@ -1,0 +1,13 @@
+services:
+   redis:    
+        image: redis:latest    
+
+   webapi:    
+        image: location-svc
+        depends_on:      
+             redis:
+                condition: service_started
+        ports:      
+             - "3002:3001"
+        environment:      
+            - REDIS_HOST=redis

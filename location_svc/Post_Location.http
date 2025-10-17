@@ -1,0 +1,8 @@
+POST http://localhost:3001/locations
+content-type: application/json
+userid: testuser1
+
+{
+    "latitude": 47.90210,
+    "longitude": -122.8675
+}
