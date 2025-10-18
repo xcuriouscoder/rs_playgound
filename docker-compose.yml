@@ -1,8 +1,18 @@
 services:
-   redis:    
+    db:
+      image: postgres:latest
+      environment:
+        POSTGRES_USER: ${POSTGRES_USER}
+        POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+        POSTGRES_DB: ${POSTGRES_DB}
+      volumes:
+        - ./storage/Schema.sql:/docker-entrypoint-initdb.d/init.sql
+      ports:
+        - "5531:5432"
+    redis:    
         image: redis:latest    
 
-   webapi:    
+    webapi:
         image: location-svc
         depends_on:      
              redis:
@@ -11,3 +21,16 @@ services:
              - "3002:3001"
         environment:      
             - REDIS_HOST=redis
+
+    ridesvc:
+        image: ride-svc
+        depends_on:
+             db:
+                condition: service_started
+        ports:
+             - "3003:3003"
+        environment:
+            - POSTGRES_HOST=db
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}

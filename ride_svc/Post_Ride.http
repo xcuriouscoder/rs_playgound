@@ -1,0 +1,12 @@
+POST http://localhost:3003/rides
+content-type: application/json
+userid: c1095838-c641-454d-a78c-0432ee8afaca
+
+{
+    "sourcelatitude": 47.69238024774168,
+    "sourcelongitude": -122.1468915306806,
+    "destinationlatitude": 47.69238024774168,
+    "destinationlongitude": -122.1468915306806,
+    "fare": 2378,
+    "passengers": 2
+}

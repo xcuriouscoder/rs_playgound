@@ -1,0 +1,3 @@
+GET http://localhost:3003/rides
+content-type: application/json
+userid: c1095838-c641-454d-a78c-0432ee8afaca
