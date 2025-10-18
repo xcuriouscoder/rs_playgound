@@ -3,10 +3,10 @@ content-type: application/json
 userid: c1095838-c641-454d-a78c-0432ee8afaca
 
 {
-    "sourcelatitude": 47.69238024774168,
-    "sourcelongitude": -122.1468915306806,
-    "destinationlatitude": 47.69238024774168,
-    "destinationlongitude": -122.1468915306806,
+    "sourcelatitude": 47.1234,
+    "sourcelongitude": -122.5678,
+    "destinationlatitude": 46.4321,
+    "destinationlongitude": -122.8765,
     "fare": 2378,
     "passengers": 2
 }
