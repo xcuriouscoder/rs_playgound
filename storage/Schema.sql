@@ -13,3 +13,20 @@ CREATE TABLE IF NOT EXISTS rides
     createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+create or replace PROCEDURE UpdatePassengerCount(
+    puserid UUID,
+    prideid UUID,
+    passenger_count INT
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    UPDATE rides
+    SET passengers = passenger_count,
+        updatedAt = NOW()
+    WHERE id = prideid
+        AND userid = puserid 
+        AND rideStatus = 0;
+END;
+$$;

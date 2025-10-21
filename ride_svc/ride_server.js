@@ -49,18 +49,14 @@ app.post('/rides', async (req, res) => {
 });
 
 
-app.patch('/rides/:id/update', async (req, res) => {
+app.patch('/rides/:id/', async (req, res) => {
     console.log('PATCH Header userid ' + req.headers.userid);
     console.log('PATCH Ride id ' + req.params.id);
     console.log('PATCH Body ' + req.body);
 
-    const updateRideText = `
-    UPDATE rides
-    SET passengers = $3
-    WHERE id = $2
-        AND userid = $1 
-        AND rideStatus = 0`;
+    const updateRideText = "CALL UpdatePassengerCount($1, $2, $3)";
     const updateRideValues = [req.headers.userid, req.params.id, req.body.passengers];   
+
     const newride =  await pgPool.query(updateRideText, updateRideValues);
     // console.log(newride.rows[0]);
     res.status(201).json(newride.rows[0]);
