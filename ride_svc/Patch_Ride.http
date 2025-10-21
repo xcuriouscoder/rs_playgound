@@ -1,0 +1,7 @@
+PATCH http://localhost:3003/rides/57d002bc-6801-424e-8685-1b83b8baadf4/update
+content-type: application/json
+userid: c1095838-c641-454d-a78c-0432ee8afaca
+
+{
+    "passengers": 5
+}

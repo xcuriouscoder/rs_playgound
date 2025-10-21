@@ -41,9 +41,28 @@ app.post('/rides', async (req, res) => {
     console.log('POST Header userid ' + req.headers.userid);
     console.log('POST Body ' + req.body);
 
-    const insertRideText = 'INSERT INTO rides(userid, source, destination, fare, passengers) VALUES($1, point($2, $3), point($4, $5), $6, $7) RETURNING *';
+    const insertRideText = 'INSERT INTO rides(userid, sourceLocation, destination, fare, passengers) VALUES($1, point($2, $3), point($4, $5), $6, $7) RETURNING *';
     const insertRideValues = [req.headers.userid, req.body.sourcelatitude, req.body.sourcelongitude, req.body.destinationlatitude, req.body.destinationlongitude, req.body.fare, req.body.passengers];   
     const newride =  await pgPool.query(insertRideText, insertRideValues);
     console.log(newride.rows[0]);
     res.status(201).json(newride.rows[0]);
 });
+
+
+app.patch('/rides/:id/update', async (req, res) => {
+    console.log('PATCH Header userid ' + req.headers.userid);
+    console.log('PATCH Ride id ' + req.params.id);
+    console.log('PATCH Body ' + req.body);
+
+    const updateRideText = `
+    UPDATE rides
+    SET passengers = $3
+    WHERE id = $2
+        AND userid = $1 
+        AND rideStatus = 0`;
+    const updateRideValues = [req.headers.userid, req.params.id, req.body.passengers];   
+    const newride =  await pgPool.query(updateRideText, updateRideValues);
+    // console.log(newride.rows[0]);
+    res.status(201).json(newride.rows[0]);
+});
+
