@@ -1,0 +1,6 @@
+@match_svc_HostAddress = http://localhost:3005
+
+GET {{match_svc_HostAddress}}/Match/
+Accept: application/json
+
+###
