@@ -1,7 +1,7 @@
-PATCH http://localhost:3003/rides/8a2a72ee-de87-4078-9e2e-ca984f1aa763/
+PATCH http://localhost:3003/v1/rides/4904bda1-debb-493d-afed-76a8986014d7/
 content-type: application/json
 userid: c1095838-c641-454d-a78c-0432ee8afaca
 
 {
-    "passengers": 2
+    "passengers": 3
 }

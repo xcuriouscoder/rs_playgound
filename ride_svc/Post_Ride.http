@@ -1,4 +1,4 @@
-POST http://localhost:3003/rides
+POST http://localhost:3003/v1/rides
 content-type: application/json
 userid: c1095838-c641-454d-a78c-0432ee8afaca
 

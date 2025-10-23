@@ -21,12 +21,44 @@ create or replace PROCEDURE UpdatePassengerCount(
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    pass_count INT;
 BEGIN
     UPDATE rides
     SET passengers = passenger_count,
         updatedAt = NOW()
     WHERE id = prideid
         AND userid = puserid 
-        AND rideStatus = 0;
+        AND rideStatus = 0
+    RETURNING passengers INTO pass_count;
+
+    IF pass_count IS NULL OR pass_count != passenger_count THEN
+        RAISE EXCEPTION 'Ride cannot be updated. Either it does not exist or is not in a state that can be updated.';
+    END IF;
+END;
+$$;
+
+
+create or replace PROCEDURE ActivateRide(
+    puserid UUID,
+    prideid UUID
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    ride_status INT;
+
+BEGIN
+    UPDATE rides
+    SET rideStatus = 1,
+        updatedAt = NOW()
+    WHERE id = prideid
+        AND userid = puserid 
+        AND rideStatus = 0
+    RETURNING rideStatus INTO ride_status;
+
+    IF ride_status IS NULL OR ride_status != 1 THEN
+        RAISE EXCEPTION 'Ride cannot be activated. Either it does not exist or is not in a state that can be activated.';
+    END IF;
 END;
 $$;

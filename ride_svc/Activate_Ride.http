@@ -1,0 +1,3 @@
+PATCH http://localhost:3003/v1/rides/f98a9af5-54f9-4a7b-8f62-f8600ea4e763/activate
+content-type: application/json
+userid: c1095838-c641-454d-a78c-0432ee8afaca

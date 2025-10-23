@@ -1,0 +1,7 @@
+GET http://localhost:3003/v1/registerdrivers
+content-type: application/json
+driverid: 54253f23-0aae-430c-8c08-341f87373758
+
+{
+    "callbackurl": "http://localhost:4000/callme"
+}

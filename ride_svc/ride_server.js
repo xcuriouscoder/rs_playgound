@@ -1,5 +1,6 @@
 const postgresClient = require('pg');
 const express = require('express');
+const redis = require("redis");
 const app = express();
 
 const postgresHost = process.env.POSTGRES_HOST || 'localhost';
@@ -21,13 +22,13 @@ app.listen(port, () => {
     console.log(`Ride Server listening on port ${port}`);
 });
 
- // Define a route to handle incoming requests
-app.get('/', (req, res) => {
-  res.send('Hello, From Ride Service!');
-});
+//  // Define a route to handle incoming requests
+// app.get('/', (req, res) => {
+//   res.send('Hello, From Ride Service!');
+// });
 
 // Read (GET) all items for User
-app.get('/rides', async (req, res) => {
+app.get('/v1/rides', async (req, res) => {
 
 //    console.log('GET Header userid ' + req.headers.userid);
 
@@ -37,7 +38,7 @@ app.get('/rides', async (req, res) => {
 });
 
 // Create (POST) a new item
-app.post('/rides', async (req, res) => {
+app.post('/v1/rides', async (req, res) => {
     console.log('POST Header userid ' + req.headers.userid);
     console.log('POST Body ' + req.body);
 
@@ -48,8 +49,7 @@ app.post('/rides', async (req, res) => {
     res.status(201).json(newride.rows[0]);
 });
 
-
-app.patch('/rides/:id/', async (req, res) => {
+app.patch('/v1/rides/:id/', async (req, res) => {
     console.log('PATCH Header userid ' + req.headers.userid);
     console.log('PATCH Ride id ' + req.params.id);
     console.log('PATCH Body ' + req.body);
@@ -62,3 +62,39 @@ app.patch('/rides/:id/', async (req, res) => {
     res.status(201).json(newride.rows[0]);
 });
 
+app.patch('/v1/rides/:id/activate', async (req, res) => {
+    console.log('PATCH Header userid ' + req.headers.userid);
+    console.log('PATCH Ride id ' + req.params.id);
+
+    const updateRideText = "CALL ActivateRide($1, $2)";
+    const updateRideValues = [req.headers.userid, req.params.id];   
+
+    const newride = await pgPool.query(updateRideText, updateRideValues);
+
+    const redistClient = redis.createClient({ url : "redis://redis:6379" });
+    redistClient.connect();
+    redistClient.publish("riderequested", req.params.id);
+    redistClient.quit();
+
+    res.status(201).send({ message: 'Ride activated' });
+});
+
+// Read (GET) all items for User
+app.get('/v1/registerdrivers', async (req, res) => {
+    res.status(200).send({ message: 'Driver registration endpoint' });
+});
+
+app.post('/v1/registerdrivers', async (req, res) => {
+    console.log('POST Header driverid ' + req.headers.driverid);
+    console.log('POST Body ' + req.body.callbackurl);
+
+    const redistClient = redis.createClient({ url : "redis://redis:6379" });
+    redistClient.connect();
+    redistClient.set(req.headers.driverid, req.body.callbackurl, { expiration: {
+        type: 'EX',
+        value: 600
+    }});
+    redistClient.quit();
+
+    res.status(201).send({ message: 'Driver registered' });
+});
