@@ -6,10 +6,12 @@ const app = express();
 const port = process.env.PORT || 3001; // Use the port provided by the host or default to 3000
 const RedisHost = process.env.REDIS_HOST || 'localhost';
 const RedisUrl = `redis://${RedisHost}:6379`;
+const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
 
 app.listen(port, () => {
   console.log(`Server listening on port ${port}`);
   console.log(`Redis Url: ${RedisUrl}`);
+    redistClient.connect();
 });
 
  // Define a route to handle incoming requests
@@ -28,8 +30,7 @@ app.post('/locations', (req, res) => {
     const userid = req.headers.userid;
 //    console.log('userid ' + userid);
 
-    const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
-    redistClient.connect();
+//    redistClient.connect();
     redistClient.GEOADD(
         "seattle", 
         {
@@ -39,9 +40,9 @@ app.post('/locations', (req, res) => {
         }).then((data) => res.status(201).json({ message: 'Location added' }));
 
 
-    console.log('Added location for user ' + userid);
+ //   console.log('Added location for user ' + userid);
 
-    redistClient.quit();
+//    redistClient.quit();
 });
 
 // Read (GET) all items

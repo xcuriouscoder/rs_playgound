@@ -9,11 +9,14 @@ namespace match_bgsvc
 {
     internal class RedisProxy
     {
-        public RedisProxy() { }
+        private ConnectionMultiplexer muxer;
+        public RedisProxy() 
+        {
+            this.muxer = ConnectionMultiplexer.Connect("redis");
+        }
 
         public async Task RegisterSubscriptionForRideAsync(Func<Guid, Task> actionAsync)
         {
-            var muxer = ConnectionMultiplexer.Connect("redis");
             var sub = muxer.GetSubscriber();
 
             await sub.SubscribeAsync("riderequested", async (channel, message) =>
@@ -35,7 +38,6 @@ namespace match_bgsvc
 
         public async Task<GeoRadiusResult[]> GetClosestDriversForLatAndLong(double latitude, double longitude, double radius)
         {
-            var muxer = ConnectionMultiplexer.Connect("redis");
             var db = muxer.GetDatabase();
 
             Console.WriteLine($"Searching for drivers within {radius} miles of lat:{latitude}, long:{longitude}");
@@ -57,7 +59,6 @@ namespace match_bgsvc
 
         public async Task<bool> IsDriverAvailable(string driverId)
         {
-            var muxer = ConnectionMultiplexer.Connect("redis");
             var db = muxer.GetDatabase();
 
             if(await db.StringSetAsync("lockeddriver" + driverId, "true", TimeSpan.FromSeconds(10), When.NotExists))
@@ -74,7 +75,6 @@ namespace match_bgsvc
 
         internal async Task RemoveDriverFromGeospatialAsync(string driverId)
         {
-            var muxer = ConnectionMultiplexer.Connect("redis");
             var db = muxer.GetDatabase();
             
             if (await db.GeoRemoveAsync("seattle", driverId))
@@ -90,7 +90,6 @@ namespace match_bgsvc
         internal async Task<string> GetDriverCallbackAsync(string driverId)
         {
             Console.WriteLine($"Retrieving callback for driver {driverId}");
-            var muxer = ConnectionMultiplexer.Connect("redis");
             var db = muxer.GetDatabase();
 
             var callback = await db.StringGetAsync(driverId);

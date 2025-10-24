@@ -11,7 +11,7 @@ namespace DriverClient
 {
     public class LocationClient
     {
-        HttpClient client = new HttpClient();
+        HttpClient client;
         Random random = new Random();
         Timer timer;
 
@@ -19,11 +19,12 @@ namespace DriverClient
 
         public int Count { get; private set; } = 0;
 
-        public LocationClient(Guid driverId)
+        public LocationClient(Guid driverId, HttpClient client)
         {
             this.DriverId = driverId.ToString();
-            client.DefaultRequestHeaders.Accept.Clear();
-            client.DefaultRequestHeaders.Add("userid", DriverId);
+            this.client = client;
+            //client.DefaultRequestHeaders.Accept.Clear();
+            //client.DefaultRequestHeaders.Add("userid", DriverId);
             client.BaseAddress = new Uri("http://localhost:3002");
 
             timer = new Timer(async _ => 
@@ -45,7 +46,7 @@ namespace DriverClient
         internal void StartLocationCalls()
         {
             Count = 0;
-            timer.Change(TimeSpan.FromSeconds(0), TimeSpan.FromSeconds(5));
+            timer.Change(TimeSpan.FromMilliseconds(10), TimeSpan.FromSeconds(5));
         }
 
         internal void StopLocationCalls()
@@ -62,10 +63,18 @@ namespace DriverClient
                 longitude = -122.5 + random.NextDouble()
             });
 
-            var response = await client.PostAsync("/locations",
-                    new StringContent(JsonConvert.SerializeObject(data),
-                    Encoding.UTF8, 
-                    "application/json"));
+            var response = await client.ContentWithHeadersAsync(
+                new StringContent(JsonConvert.SerializeObject(data),
+                        Encoding.UTF8,
+                        "application/json"),
+                "/locations",
+                new Dictionary<string, string> { { "userid", this.DriverId } },
+                HttpMethod.Post);
+
+            //var response = await client.PostAsync("/locations",
+            //        new StringContent(JsonConvert.SerializeObject(data),
+            //            Encoding.UTF8, 
+            //            "application/json"));
 
             response.EnsureSuccessStatusCode();
 
@@ -76,20 +85,22 @@ namespace DriverClient
 
         internal async Task RegisterDriverAsync()
         {
-            var rideClient = new HttpClient();
-            rideClient.DefaultRequestHeaders.Accept.Clear();
-            rideClient.DefaultRequestHeaders.Add("driverid", this.DriverId);
-            rideClient.BaseAddress = new Uri("http://localhost:3003");
-
-            var data = JObject.FromObject(new
+            using (var rideClient = new HttpClient())
             {
-                callbackurl = "http://localhost/fake/url" + random.NextInt64()
-            });
+                rideClient.DefaultRequestHeaders.Accept.Clear();
+                rideClient.DefaultRequestHeaders.Add("driverid", this.DriverId);
+                rideClient.BaseAddress = new Uri("http://localhost:3003");
 
-            var response = await rideClient.PostAsync("/v1/registerdrivers",
-                    new StringContent(JsonConvert.SerializeObject(data),
-                    Encoding.UTF8,
-                    "application/json"));
+                var data = JObject.FromObject(new
+                {
+                    callbackurl = "http://localhost/fake/url" + random.NextInt64()
+                });
+
+                var response = await rideClient.PostAsync("/v1/registerdrivers",
+                        new StringContent(JsonConvert.SerializeObject(data),
+                        Encoding.UTF8,
+                        "application/json"));
+            }
         }
     }
 }

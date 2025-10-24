@@ -8,13 +8,13 @@ namespace match_bgsvc
         private readonly ILogger<Worker> _logger;
 
         private Random rand = new Random();
+        private RedisProxy redisProxy = new RedisProxy();
 
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
 
-            var redis = new RedisProxy();
-            redis.RegisterSubscriptionForRideAsync(ProcessRideAsync).Wait();
+            redisProxy.RegisterSubscriptionForRideAsync(ProcessRideAsync).Wait();
 
 
             //var muxer = ConnectionMultiplexer.Connect("redis");
@@ -61,8 +61,6 @@ namespace match_bgsvc
             {
                 Console.WriteLine($"Processing ride request {ride.RideId} from ({ride.SourceLatitude}, {ride.SourceLongitude}) to ({ride.DestinationLatitude}, {ride.DestinationLongitude})");
                 // Simulate driver assignment
-
-                var redisProxy = new RedisProxy();
 
                 GeoRadiusResult[] nearbyDrivers;
                 var milesRadius = 5.0; // miles
@@ -114,7 +112,6 @@ namespace match_bgsvc
                 Console.WriteLine($"No available ride found for Ride ID {rideId}");
             }
         }
-
 
         private async Task<bool> DriverAcceptsRideAsync(Task<string> callback, Guid rideId)
         {
