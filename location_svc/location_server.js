@@ -38,21 +38,38 @@ app.post('/locations', (req, res) => {
             member: userid
         }).then((data) => res.status(201).json({ message: 'Location added' }));
 
+
+    console.log('Added location for user ' + userid);
+
     redistClient.quit();
 });
 
 // Read (GET) all items
-app.get('/locations', (req, res) => {
+app.get('/locations', async (req, res) => {
 
     console.log('GET Header userid ' + req.headers.userid);
 
     const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
     redistClient.connect();
-    redistClient.GEOPOS("seattle", req.headers.userid)
-        .then((data) => {
-        console.log(data);
-        res.json(data);
-    });
+    // redistClient.GEOPOS("seattle", req.headers.userid)
+    //     .then((data) => {
+    //     console.log(data);
+    //     res.json(data);
+    // });
+
+    // redistClient.subscribe("test", (message, channel) => {
+    //     console.log(`Received message: ${message} on channel: ${channel}`);
+    //     res.json(message);
+    // });
+
+    // const result = await redistClient.geosearch("seattle", "FROMLONLAT", -122.1468915306806, 47.69238024774168, "BYRADIUS", 100, "km", "ASC")
+    // console.log(result)
+
+    // redistClient.geoSearch("seattle", {
+    //     longitude: parseFloat(req.query.longitude),
+    //     latitude: parseFloat(req.query.latitude),
+    //     radius: 100,
+    //     unit: 'km'
 
     redistClient.quit();
 });

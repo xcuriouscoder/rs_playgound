@@ -34,12 +34,24 @@ services:
             - POSTGRES_USER=${POSTGRES_USER}
             - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
             - POSTGRES_DB=${POSTGRES_DB}
-    matchapi:
-        image: match-svc
+    # matchapi:
+    #     image: match-svc
+    #     depends_on:      
+    #          redis:
+    #             condition: service_started
+    #     ports:      
+    #          - "3005:8080"
+    #     environment:      
+    #         - REDIS_HOST=redis
+    matchbgsvc:
+        image: match-bgsvc
         depends_on:      
              redis:
                 condition: service_started
-        ports:      
-             - "3005:8080"
-        environment:      
-            - REDIS_HOST=redis
+             db:
+                condition: service_started
+        environment:
+            - POSTGRES_HOST=db
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_DB=${POSTGRES_DB}

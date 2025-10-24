@@ -15,12 +15,13 @@ namespace DriverClient
         Random random = new Random();
         Timer timer;
 
-        public string DriverId { get; } = Guid.NewGuid().ToString();
+        public string DriverId { get; private set; }
 
         public int Count { get; private set; } = 0;
 
-        public LocationClient()
+        public LocationClient(Guid driverId)
         {
+            this.DriverId = driverId.ToString();
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Add("userid", DriverId);
             client.BaseAddress = new Uri("http://localhost:3002");
@@ -57,8 +58,8 @@ namespace DriverClient
 
             var data = JObject.FromObject(new
             {
-                latitude = 47 + random.NextDouble(),
-                longitude = -122 + random.NextDouble()
+                latitude = 47.1 + random.NextDouble(),
+                longitude = -122.5 + random.NextDouble()
             });
 
             var response = await client.PostAsync("/locations",
@@ -71,6 +72,24 @@ namespace DriverClient
             this.Count++;
 
             var responseContent = await response.Content.ReadAsStringAsync();
+        }
+
+        internal async Task RegisterDriverAsync()
+        {
+            var rideClient = new HttpClient();
+            rideClient.DefaultRequestHeaders.Accept.Clear();
+            rideClient.DefaultRequestHeaders.Add("driverid", this.DriverId);
+            rideClient.BaseAddress = new Uri("http://localhost:3003");
+
+            var data = JObject.FromObject(new
+            {
+                callbackurl = "http://localhost/fake/url" + random.NextInt64()
+            });
+
+            var response = await rideClient.PostAsync("/v1/registerdrivers",
+                    new StringContent(JsonConvert.SerializeObject(data),
+                    Encoding.UTF8,
+                    "application/json"));
         }
     }
 }

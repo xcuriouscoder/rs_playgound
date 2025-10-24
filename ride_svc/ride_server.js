@@ -92,7 +92,7 @@ app.post('/v1/registerdrivers', async (req, res) => {
     redistClient.connect();
     redistClient.set(req.headers.driverid, req.body.callbackurl, { expiration: {
         type: 'EX',
-        value: 600
+        value: 6000
     }});
     redistClient.quit();
 
