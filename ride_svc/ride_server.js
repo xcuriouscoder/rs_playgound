@@ -1,6 +1,7 @@
 const express = require('express');
 const redis = require("redis");
 const { getRidesForUserId, createRideInStorage, patchRideInStorage, activateRideInStorage } = require('./postgres_proxy');
+const { sendRideActivationToQueue } = require('./kafka_proxy');
 const app = express();
 const port = process.env.PORT || 3003;
 
@@ -46,10 +47,12 @@ app.patch('/v1/rides/:id/activate', async (req, res) => {
 
     await activateRideInStorage(req);
 
-    const redistClient = redis.createClient({ url : "redis://redis:6379" });
-    redistClient.connect();
-    redistClient.publish("riderequested", req.params.id);
-    redistClient.quit();
+    await sendRideActivationToQueue(req.params.id);
+
+    // const redistClient = redis.createClient({ url : "redis://redis:6379" });
+    // redistClient.connect();
+    // redistClient.publish("riderequested", req.params.id);
+    // redistClient.quit();
 
     res.status(201).send({ message: 'Ride activated' });
 });

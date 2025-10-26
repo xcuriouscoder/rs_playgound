@@ -9,13 +9,18 @@ namespace match_bgsvc
 
         private Random rand = new Random();
         private RedisProxy redisProxy = new RedisProxy();
+        private KafkaProxy kafkaProxy;
 
         public Worker(ILogger<Worker> logger)
         {
             _logger = logger;
 
-            redisProxy.RegisterSubscriptionForRideAsync(ProcessRideAsync).Wait();
+            Console.WriteLine("Starting Worker Service...");
 
+            kafkaProxy = new KafkaProxy();
+
+            redisProxy.RegisterSubscriptionForRideAsync(ProcessRideAsync).Wait();
+            kafkaProxy.ProcessMessages(ProcessRideAsync);
 
             //var muxer = ConnectionMultiplexer.Connect("redis");
             //var sub = muxer.GetSubscriber();
