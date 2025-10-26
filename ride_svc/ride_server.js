@@ -1,19 +1,8 @@
-const postgresClient = require('pg');
 const express = require('express');
 const redis = require("redis");
+const { getRidesForUserId, createRideInStorage, patchRideInStorage, activateRideInStorage } = require('./postgres_proxy');
 const app = express();
-
-const postgresHost = process.env.POSTGRES_HOST || 'localhost';
-const postgresUser = process.env.POSTGRES_USER || 'postgres';
-const postgresPassword = process.env.POSTGRES_PASSWORD || 'example';
-const postgresDatabase = process.env.POSTGRES_DB || 'uberstuff';
 const port = process.env.PORT || 3003;
-
-const pgPool = new postgresClient.Pool({ 
-    user: postgresUser, 
-    host: postgresHost, 
-    database: postgresDatabase, 
-    password: postgresPassword});
 
 // Middleware to parse JSON requests
 app.use(express.json());
@@ -22,17 +11,11 @@ app.listen(port, () => {
     console.log(`Ride Server listening on port ${port}`);
 });
 
-//  // Define a route to handle incoming requests
-// app.get('/', (req, res) => {
-//   res.send('Hello, From Ride Service!');
-// });
 
 // Read (GET) all items for User
 app.get('/v1/rides', async (req, res) => {
 
-//    console.log('GET Header userid ' + req.headers.userid);
-
-    const allrides = await pgPool.query('SELECT * FROM rides WHERE userid = $1', [req.headers.userid]);
+    const allrides = await getRidesForUserId(req);
     console.log(allrides.rows);
     res.json(allrides.rows);
 });
@@ -42,9 +25,7 @@ app.post('/v1/rides', async (req, res) => {
     console.log('POST Header userid ' + req.headers.userid);
     console.log('POST Body ' + req.body);
 
-    const insertRideText = 'INSERT INTO rides(userid, sourceLocation, destination, fare, passengers) VALUES($1, point($2, $3), point($4, $5), $6, $7) RETURNING *';
-    const insertRideValues = [req.headers.userid, req.body.sourcelatitude, req.body.sourcelongitude, req.body.destinationlatitude, req.body.destinationlongitude, req.body.fare, req.body.passengers];   
-    const newride =  await pgPool.query(insertRideText, insertRideValues);
+    const newride = await createRideInStorage(req);
     console.log(newride.rows[0]);
     res.status(201).json(newride.rows[0]);
 });
@@ -54,10 +35,7 @@ app.patch('/v1/rides/:id/', async (req, res) => {
     console.log('PATCH Ride id ' + req.params.id);
     console.log('PATCH Body ' + req.body);
 
-    const updateRideText = "CALL UpdatePassengerCount($1, $2, $3)";
-    const updateRideValues = [req.headers.userid, req.params.id, req.body.passengers];   
-
-    const newride =  await pgPool.query(updateRideText, updateRideValues);
+    const newride = await patchRideInStorage(req);
     // console.log(newride.rows[0]);
     res.status(201).json(newride.rows[0]);
 });
@@ -66,10 +44,7 @@ app.patch('/v1/rides/:id/activate', async (req, res) => {
     console.log('PATCH Header userid ' + req.headers.userid);
     console.log('PATCH Ride id ' + req.params.id);
 
-    const updateRideText = "CALL ActivateRide($1, $2)";
-    const updateRideValues = [req.headers.userid, req.params.id];   
-
-    const newride = await pgPool.query(updateRideText, updateRideValues);
+    await activateRideInStorage(req);
 
     const redistClient = redis.createClient({ url : "redis://redis:6379" });
     redistClient.connect();
@@ -98,3 +73,5 @@ app.post('/v1/registerdrivers', async (req, res) => {
 
     res.status(201).send({ message: 'Driver registered' });
 });
+
+
