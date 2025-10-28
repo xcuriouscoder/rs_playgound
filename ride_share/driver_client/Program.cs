@@ -8,10 +8,12 @@ internal class Program
         //        var locClient = new LocationClient();
 
         var client = new HttpClient();
+        client.BaseAddress = new Uri("http://localhost:3002");
 
-        // await SimulateDriversAsync(client);
 
-        await LoadTestLocationServiceAsync(client);
+        await SimulateDriversAsync(client);
+
+        //await LoadTestLocationServiceAsync(client);
     }
 
     private static async Task LoadTestLocationServiceAsync(HttpClient client)
@@ -67,8 +69,8 @@ internal class Program
         var driverGuids = new Guid[]
         {
             Guid.Parse("6d9815f8-c8c0-48e4-9bf7-9461f0e2bc25"),
-            //Guid.Parse("3a7e1a87-1c1b-475f-ab11-ab5d32dd123e"),
-            //Guid.Parse("66411b4b-64f2-4e22-9009-8183ea6ee8e9")
+            Guid.Parse("3a7e1a87-1c1b-475f-ab11-ab5d32dd123e"),
+            Guid.Parse("66411b4b-64f2-4e22-9009-8183ea6ee8e9")
         };
 
         var drivers = new List<LocationClient>();

@@ -25,7 +25,7 @@ namespace DriverClient
             this.client = client;
             //client.DefaultRequestHeaders.Accept.Clear();
             //client.DefaultRequestHeaders.Add("userid", DriverId);
-            client.BaseAddress = new Uri("http://localhost:3002");
+            //client.BaseAddress = new Uri("http://localhost:3002");
 
             timer = new Timer(async _ => 
             {
