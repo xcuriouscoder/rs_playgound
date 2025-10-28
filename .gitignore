@@ -2,3 +2,9 @@
 **/.vs/**
 **/CoPilotIndices/**
 **/obj/**
+**/*.sln/**
+*.sln
+**/.env
+**/obj/**
+**/bin/**
+**/.vs/**
