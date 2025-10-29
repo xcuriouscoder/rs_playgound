@@ -9,7 +9,9 @@ const pgPool = new postgresClient.Pool({
     user: postgresUser, 
     host: postgresHost, 
     database: postgresDatabase, 
-    password: postgresPassword});async function createRideInStorage(req) {
+    password: postgresPassword});
+    
+async function createRideInStorage(req) {
     const insertRideText = 'INSERT INTO rides(userid, sourceLocation, destination, fare, passengers) VALUES($1, point($2, $3), point($4, $5), $6, $7) RETURNING *';
     const insertRideValues = [req.headers.userid, req.body.sourcelatitude, req.body.sourcelongitude, req.body.destinationlatitude, req.body.destinationlongitude, req.body.fare, req.body.passengers];
     const newride = await pgPool.query(insertRideText, insertRideValues);

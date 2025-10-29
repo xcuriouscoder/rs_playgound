@@ -1,0 +1,3 @@
+GET http://localhost:3004/competitions
+content-type: application/json
+userid: testuser1
