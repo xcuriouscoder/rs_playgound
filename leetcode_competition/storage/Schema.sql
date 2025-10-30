@@ -28,9 +28,9 @@ CREATE TABLE IF NOT EXISTS ProblemResults
     problemId uuid REFERENCES problems(id) ON DELETE CASCADE,
     competitionId uuid REFERENCES Competitions(id) ON DELETE CASCADE,
     userId uuid NOT NULL,
-    status INT NOT NULL,
-    timeTaken float NOT NULL,
-    memoryUsed float NOT NULL,
+    status INT NOT NULL DEFAULT 0, -- 0: Submitted, 1: Accepted, 2: Wrong Answer, 3: Runtime Error, etc.
+    timeTaken float NOT NULL DEFAULT 0.0,
+    memoryUsed float NOT NULL DEFAULT 0.0,
     submittedAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -66,6 +66,45 @@ INSERT INTO Competitions (id, name, problems, startTime, endTime) VALUES
 
 SELECT problems.* FROM problems join competitions ON competitions.problems @> ARRAY[problems.id]
 WHERE competitions.id = 'd1f5e8c3-3b6e-4f2a-9f4e-2b5c6d7e8f90';
+
+    -- problemId uuid REFERENCES problems(id) ON DELETE CASCADE,
+    -- competitionId uuid REFERENCES Competitions(id) ON DELETE CASCADE,
+    -- userId uuid NOT NULL,
+
+CREATE OR REPLACE FUNCTION SubmitAnswerToCompetitionProblem(
+    pcompetitionid UUID,
+    pproblemid UUID,
+    puserid UUID,
+    pstatus INT
+) RETURNS INT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    score INT;
+BEGIN
+
+MERGE INTO ProblemResults AS pr
+USING (SELECT pcompetitionid AS competitionId, pproblemid AS problemId, puserid AS userId) 
+    AS src
+ON pr.userId = src.userid 
+    AND pr.problemId = src.problemid 
+    AND pr.competitionId = src.competitionid
+WHEN MATCHED THEN
+    UPDATE SET submittedAt = NOW(),
+    updatedAt = NOW(),
+    status = pstatus
+WHEN NOT MATCHED THEN
+    INSERT (problemId, competitionId, userId, status) 
+    VALUES (pproblemid, pcompetitionid, puserid, pstatus);
+
+    SELECT COUNT(*) INTO score FROM ProblemResults
+    WHERE competitionId = pcompetitionid
+        AND userId = puserid
+        AND status = 1;
+
+    RETURN score;
+END;
+$$;
 
 -- create or replace PROCEDURE UpdatePassengerCount(
 --     puserid UUID,

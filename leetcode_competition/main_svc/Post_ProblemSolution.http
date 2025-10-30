@@ -1,0 +1,9 @@
+POST http://localhost:3004/competitions/d1f5e8c3-3b6e-4f2a-9f4e-2b5c6d7e8f90/problems/b4b852cf-8781-4ab2-a00f-5fb52c39c478/submit
+content-type: application/json
+userid: f626a46e-a037-4950-b3c0-502382968a28
+
+{
+    "language": "python",
+    "base64code": "cHJpbnQoIkhlbGxvLCBXb3JsZCEiKQ=="
+}
+

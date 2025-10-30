@@ -17,6 +17,8 @@ services:
         depends_on:
              db:
                 condition: service_started
+             kafka:
+                condition: service_started
         ports:      
              - "3004:3004"
         environment:
@@ -26,6 +28,28 @@ services:
             - POSTGRES_DB=${POSTGRES_DB}
         # environment:      
         #     - REDIS_HOST=redis
+    kafka:
+      image: apache/kafka:latest
+      container_name: lcbroker
+      environment:
+        KAFKA_NODE_ID: 1
+        KAFKA_PROCESS_ROLES: broker,controller
+        KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://lcbroker:9092,EXTERNAL://kafka:9094
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+        KAFKA_CONTROLLER_QUORUM_VOTERS: 1@lcbroker:9093
+        KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_CREATE_TOPICS: "codesubmissions:1:1"
+    code-runner:
+        image: code-runner
+        depends_on:
+             leet-main-svc:
+                condition: service_started
+             kafka:
+                condition: service_started
 
     # ridesvc:
     #     image: ride-svc
@@ -55,18 +79,3 @@ services:
     #         - POSTGRES_USER=${POSTGRES_USER}
     #         - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     #         - POSTGRES_DB=${POSTGRES_DB}
-    # kafka:
-    #   image: apache/kafka:latest
-    #   container_name: broker
-    #   environment:
-    #     KAFKA_NODE_ID: 1
-    #     KAFKA_PROCESS_ROLES: broker,controller
-    #     KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
-    #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092,EXTERNAL://kafka:9094
-    #     KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-    #     KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:9093
-    #     KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-    #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-    #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-    #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-    #     KAFKA_CREATE_TOPICS: "codesubmissions:1:1"

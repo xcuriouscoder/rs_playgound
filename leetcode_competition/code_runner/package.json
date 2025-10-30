@@ -1,8 +1,8 @@
 {
-  "name": "main_svc",
+  "name": "code_runner",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "code_runner.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -11,8 +11,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "express": "^5.1.0",
+    "http": "^0.0.1-security",
     "kafkajs": "^2.2.4",
-    "pg": "^8.16.3"
+    "superagent": "^10.2.3"
   }
 }
