@@ -9,8 +9,8 @@ services:
         - ./storage/Schema.sql:/docker-entrypoint-initdb.d/init.sql
       ports:
         - "5532:5432"
-    # redis:    
-    #     image: redis:latest    
+    redis:
+        image: redis:latest    
 
     leet-main-svc:
         image: leet-main
@@ -18,6 +18,8 @@ services:
              db:
                 condition: service_started
              kafka:
+                condition: service_started
+             redis:
                 condition: service_started
         ports:      
              - "3004:3004"

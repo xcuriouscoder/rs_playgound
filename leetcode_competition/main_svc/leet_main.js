@@ -2,6 +2,7 @@ const express = require('express');
 //const redis = require("redis");
 const { getAllCompetitions, getProblemsForCompetitionId, getProblemById, submitProblemSolutionToStorage } = require('./postgres_proxy');
 const { submitCodeToQueue } = require('./kafka_proxy');
+const { updateScoreInRedis, getTopScoresFromRedis } = require('./redis_client');
 const app = express();
 const port = process.env.PORT || 3004;
 
@@ -58,11 +59,21 @@ app.post('/results', async (req, res) => {
         req.body.competitionId,
         req.body.result);
 
+    await updateScoreInRedis(req.body.userId, req.body.competitionId, score);
+
     console.log('Updated submission with score: ' + score);
 
     res.status(200).json({ message: 'Results received' });
 });
 
+app.get('/leaderboard/:competitionId', async (req, res) => {
+    // To be implemented: Fetch leaderboard from storage
+    const leaders = await getTopScoresFromRedis(req.params.competitionId, 10);
+
+    const results = JSON.stringify(leaders);
+    console.log('Leaderboard: ' + results);
+    res.json(leaders);
+});
 
 // // Create (POST) a new item
 // app.post('/v1/rides', async (req, res) => {
