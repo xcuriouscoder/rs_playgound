@@ -36,6 +36,16 @@ CREATE TABLE IF NOT EXISTS ProblemResults
     updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS Users
+(
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    passwordHash VARCHAR(255) NOT NULL,
+    createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO Problems (id, name, description, difficulty, tags, codeTemplates) VALUES
 (
     'b4b852cf-8781-4ab2-a00f-5fb52c39c478',

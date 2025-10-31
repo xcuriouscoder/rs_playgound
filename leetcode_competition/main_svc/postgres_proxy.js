@@ -35,3 +35,18 @@ async function submitProblemSolutionToStorage(userId, problemId, competitionId, 
 }
 exports.submitProblemSolutionToStorage = submitProblemSolutionToStorage;
 
+async function createUserInStorage(username, email) {
+    const insertUserText = 'INSERT INTO users(username, email, passwordHash) VALUES($1, $2, $3) RETURNING *';
+    const insertUserValues = [username, email, "fishy"];
+    const newUser = await pgPool.query(insertUserText, insertUserValues);
+    return newUser;
+}
+exports.createUserInStorage = createUserInStorage;
+
+async function getCompetitionProblemResultForUser(userId, competitionId, problemId) {
+    const queryText = 'SELECT status FROM ProblemResults WHERE userId = $1 AND competitionId = $2 AND problemId = $3 ORDER BY createdat DESC LIMIT 1';
+    const queryValues = [userId, competitionId, problemId];
+    const result = await pgPool.query(queryText, queryValues);
+    return result.rows.length > 0 ? result.rows[0].status : null;
+};
+exports.getCompetitionProblemResultForUser = getCompetitionProblemResultForUser;

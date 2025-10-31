@@ -19,14 +19,16 @@ async function runWorker() {
     console.log(`Connecting Code Runner ${workerData}`);
     await consumer.connect();
     console.log(`Connected Code Runner ${workerData} successfully`);
+    const threadNumber = workerData;
 
     await consumer.subscribe({ topic: kafkatopic, fromBeginning: true });
 
     consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
 
-            const wasSent = await processCodeSubmission(topic, partition, message);
-
+            console.log(`${new Date().toString()} -- Worker ${threadNumber} processing message from topic ${topic}, partition ${partition}, offset ${message.offset}`);
+            const wasSent = await processCodeSubmission(topic, partition, message, threadNumber);
+            console.log(`${new Date().toString()} -- Worker ${threadNumber} completed processing message from topic ${topic}, partition ${partition}, offset ${message.offset} with result: ${wasSent ? "Success" : "Failure"}`);
             if (wasSent) {
                 consumer.commitOffsets([{
                     topic: topic,

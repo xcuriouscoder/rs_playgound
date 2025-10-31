@@ -1,6 +1,13 @@
 const express = require('express');
 //const redis = require("redis");
-const { getAllCompetitions, getProblemsForCompetitionId, getProblemById, submitProblemSolutionToStorage } = require('./postgres_proxy');
+const { 
+    getAllCompetitions, 
+    getProblemsForCompetitionId, 
+    getProblemById, 
+    submitProblemSolutionToStorage, 
+    createUserInStorage,
+    getCompetitionProblemResultForUser
+ } = require('./postgres_proxy');
 const { submitCodeToQueue } = require('./kafka_proxy');
 const { updateScoreInRedis, getTopScoresFromRedis } = require('./redis_client');
 const app = express();
@@ -73,6 +80,30 @@ app.get('/leaderboard/:competitionId', async (req, res) => {
     const results = JSON.stringify(leaders);
     console.log('Leaderboard: ' + results);
     res.json(leaders);
+});
+
+app.post('/users', async (req, res) => {
+    console.log('Create User Header userid ' + req.headers.userid);
+
+    const newUser = await createUserInStorage(
+        req.body.username, 
+        req.body.email);
+    console.log('Created new user: ' + JSON.stringify(newUser.rows[0]));
+    res.status(201).json(newUser.rows[0]);
+
+});
+
+app.get('/competitions/:competitionId/problems/:problemId/result', async (req, res) => {
+    console.log('Submission result Header userid ' + req.headers.userid);
+    console.log('GET Params ' + JSON.stringify(req.params));
+
+    const result = await getCompetitionProblemResultForUser(
+        req.headers.userid, 
+        req.params.competitionId, 
+        req.params.problemId);
+
+    console.log('Fetched submission result for user ' + req.headers.userid + ' for competition ' + req.params.competitionId + ' and problem ' + req.params.problemId + ': ' + result);
+    res.json({ status: result });
 });
 
 // // Create (POST) a new item

@@ -6,7 +6,7 @@ function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
 
-async function processCodeSubmission(topic, partition, message) {
+async function processCodeSubmission(topic, partition, message, threadNumber) {
     const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
     console.log(`- ${prefix} ${message.key}#${message.value}`);
     const submission = JSON.parse(message.value.toString());
@@ -20,7 +20,7 @@ async function processCodeSubmission(topic, partition, message) {
 
     // Here you would add the logic to compile and run the code submission
     const delayTime = getRandomInt(10) * 1000;
-    console.log(`*** Simulating code processing for ${delayTime} ms...`);
+    console.log(`*** Thread ${threadNumber} Simulating code processing for ${delayTime} ms...`);
     await delay(delayTime); // Simulate code processing time
 
     console.log(`Completed processing submission for User: ${submission.userid}, Competition: ${submission.competitionid}, Problem: ${submission.problemid}`);

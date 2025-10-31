@@ -44,7 +44,7 @@ services:
         KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
         KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
         KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-        KAFKA_CREATE_TOPICS: "codesubmissions:1:1"
+#        KAFKA_CREATE_TOPICS: "codesubmissions:1:1"
     code-runner:
         image: code-runner
         depends_on:
@@ -54,6 +54,15 @@ services:
                 condition: service_started
         environment:
             MAX_CODE_RUNNERS: 10
+    # dn-code-runner:
+    #     image: code-runner-svc
+    #     depends_on:
+    #          leet-main-svc:
+    #             condition: service_started
+    #          kafka:
+    #             condition: service_started
+    #     environment:
+    #         MAX_CODE_RUNNERS: 10
 
     # ridesvc:
     #     image: ride-svc

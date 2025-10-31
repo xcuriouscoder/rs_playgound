@@ -20,7 +20,7 @@ async function init() {
     topics: [
       {
         topic: kafkatopic,
-        numPartitions: 1,
+        numPartitions: 100,
       },
     ],
   });
@@ -31,17 +31,6 @@ async function init() {
 }
 
 init();
-
-// const run = async () => {
-//   await producer.connect();
-//   await producer.send({
-//     topic: 'test-topic',
-//     messages: [
-//       { key: 'key1', value: 'Hello Kafka' },
-//     ],
-//   });
-//   await producer.disconnect();
-// };
 
 async function submitCodeToQueue(userId, competitionId, problemId, base64code) {
   const producer = kafka.producer();
@@ -63,8 +52,7 @@ async function submitCodeToQueue(userId, competitionId, problemId, base64code) {
     topic: kafkatopic,
     messages: [
     {
-        partition: 0,
-        key: "code-submission",
+        key: userId,
         value: submissionValue,
     }]});
 
