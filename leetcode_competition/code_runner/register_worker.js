@@ -26,7 +26,7 @@ async function runWorker() {
     consumer.run({
         eachMessage: async ({ topic, partition, message }) => {
 
-            console.log(`${new Date().toString()} -- Worker ${threadNumber} processing message from topic ${topic}, partition ${partition}, offset ${message.offset}`);
+   //         console.log(`${new Date().toString()} -- Worker ${threadNumber} processing message from topic ${topic}, partition ${partition}, offset ${message.offset}`);
             const wasSent = await processCodeSubmission(topic, partition, message, threadNumber);
             console.log(`${new Date().toString()} -- Worker ${threadNumber} completed processing message from topic ${topic}, partition ${partition}, offset ${message.offset} with result: ${wasSent ? "Success" : "Failure"}`);
             if (wasSent) {

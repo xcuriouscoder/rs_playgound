@@ -13,7 +13,7 @@ async function postResults(competitionId, userId, problemId, result) {
         const { body } = await superagent.post('http://leet-main-svc:3004/results')
             .send(data);
         // Show response data
-        console.log(body);
+   //     console.log(body);
         return true;
     } catch (err) {
         console.error(err);

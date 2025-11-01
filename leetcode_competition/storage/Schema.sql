@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS ProblemResults
     createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updatedAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE UNIQUE INDEX IF NOT EXISTS problemresults_user_competition_problem_idx ON ProblemResults (userId, competitionId, problemId);
 
 CREATE TABLE IF NOT EXISTS Users
 (

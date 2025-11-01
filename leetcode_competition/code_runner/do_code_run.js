@@ -9,25 +9,25 @@ function getRandomInt(max) {
 
 async function processCodeSubmission(topic, partition, message, threadNumber) {
     const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
-    console.log(`- ${prefix} ${message.key}#${message.value}`);
+//    console.log(`- ${prefix} ${message.key}#${message.value}`);
     const submission = JSON.parse(message.value.toString());
     console.log(`Processing submission for User: ${submission.userid}, Competition: ${submission.competitionid}, Problem: ${submission.problemid}`);
     // Create a buffer from the string
-    let bufferObj = Buffer.from(submission.code, "base64");
+  //  let bufferObj = Buffer.from(submission.code, "base64");
 
     // Encode the Buffer as a utf8 string
-    const decodedString = bufferObj.toString("utf8");
-    console.log(`Decoded Code: ${decodedString}`);
+  //  const decodedString = bufferObj.toString("utf8");
+//    console.log(`Decoded Code: ${decodedString}`);
 
     // Here you would add the logic to compile and run the code submission
     const delayTime = getRandomInt(5) * getRandomInt(1000);
     console.log(`*** Thread ${threadNumber} Simulating code processing for ${delayTime} ms...`);
     await delay(delayTime); // Simulate code processing time
 
-    console.log(`Completed processing submission for User: ${submission.userid}, Competition: ${submission.competitionid}, Problem: ${submission.problemid}`);
+//    console.log(`Completed processing submission for User: ${submission.userid}, Competition: ${submission.competitionid}, Problem: ${submission.problemid}`);
 
     const success = getRandomInt(100) < 85; // Simulate an 85% success rate for code execution
-    console.log(`Submission Result: ${success ? "Success" : "Failure"}`);
+ //   console.log(`Submission Result: ${success ? "Success" : "Failure"}`);
 
     const wasSent = await postResults(
         submission.competitionid,
