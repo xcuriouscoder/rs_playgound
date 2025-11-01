@@ -60,6 +60,70 @@ INSERT INTO Problems (id, name, description, difficulty, tags, codeTemplates) VA
     'You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.', 
     2, 
     ARRAY['Linked List', 'Math'], '{"python": "def addTwoNumbers(l1, l2):\\n    pass", "java": "public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    '6523ab11-ff23-4389-a43e-d1c459d8804b',
+    'Longest Substring Without Repeating Characters',
+    'Given a string s, find the length of the longest substring without repeating characters.',
+    3,
+    ARRAY['String', 'Sliding Window'],
+    '{"python": "def lengthOfLongestSubstring(s):\\n    pass", "java": "public int lengthOfLongestSubstring(String s) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    'd6767ef6-aecc-489b-8834-469e7807f8f1',
+    'Median of Two Sorted Arrays',
+    'Given two sorted arrays nums1 and nums2 of size m and n respectively, return the median of the two sorted arrays.',
+    4,
+    ARRAY['Array', 'Binary Search'],
+    '{"python": "def findMedianSortedArrays(nums1, nums2):\\n    pass", "java": "public double findMedianSortedArrays(int[] nums1, int[] nums2) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    '0f32aed9-2415-4578-b954-b3d9f3ee5a6c',
+    'Longest Palindromic Substring',
+    'Given a string s, return the longest palindromic substring in s.',
+    3,
+    ARRAY['String', 'Dynamic Programming'],
+    '{"python": "def longestPalindrome(s):\\n    pass", "java": "public String longestPalindrome(String s) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    'b92e82c2-3399-47ab-9fe6-4d626a0d4567',
+    'ZigZag Conversion',
+    'The string "PAYPALISHIRING" is written in a zigzag pattern on a given number of rows like this: (you may want to display this pattern in a fixed font for better legibility) And then read line by line: "PAHNAPLSIIGYIR"',
+    2,
+    ARRAY['String'],
+    '{"python": "def convert(s, numRows):\\n    pass", "java": "public String convert(String s, int numRows) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    'a3060a4f-fd23-4f1f-b040-66f50884a307',
+    'Container With Most Water',
+    'You are given an integer array height of length n. There are n vertical lines drawn such that the two endpoints of the ith line are (i, 0) and (i, height[i]). Find two lines that together with the x-axis form a container, such that the container contains the most water.',
+    2,
+    ARRAY['Array', 'Two Pointers'],
+    '{"python": "def maxArea(height):\\n    pass", "java": "public int maxArea(int[] height) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    'fd8f57cc-2f76-41e5-a0ed-d3df1977e01e',
+    'Integer to Roman',
+    'Given an integer, convert it to a roman numeral.',
+    2,
+    ARRAY['Math', 'String'],
+    '{"python": "def intToRoman(num):\\n    pass", "java": "public String intToRoman(int num) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    '42764af1-7eb7-4f0c-9584-86c752e10a48',
+    'Roman to Integer',
+    'Given a roman numeral, convert it to an integer.',
+    2,
+    ARRAY['Math', 'String'],
+    '{"python": "def romanToInt(s):\\n    pass", "java": "public int romanToInt(String s) {\\n    // TODO: Implement\\n}"}'
+),
+(
+    '437d52ff-69fa-4989-954d-f8454afc6b74',
+    'Longest Common Prefix',
+    'Write a function to find the longest common prefix string amongst an array of strings. If there is no common prefix, return an empty string "".',
+    1,
+    ARRAY['String'],
+    '{"python": "def longestCommonPrefix(strs):\\n    pass", "java": "public String longestCommonPrefix(String[] strs) {\\n    // TODO: Implement\\n}"}'
 );
 
 INSERT INTO Competitions (id, name, problems, startTime, endTime) VALUES
@@ -68,7 +132,15 @@ INSERT INTO Competitions (id, name, problems, startTime, endTime) VALUES
     'Docker Coding Challenge',
     ARRAY[
         'b4b852cf-8781-4ab2-a00f-5fb52c39c478'::uuid,
-        '46fe4f2f-9230-46f1-999d-43cbba9d745f'::uuid
+        '46fe4f2f-9230-46f1-999d-43cbba9d745f'::uuid,
+        '6523ab11-ff23-4389-a43e-d1c459d8804b'::uuid,
+        'd6767ef6-aecc-489b-8834-469e7807f8f1'::uuid,
+        '0f32aed9-2415-4578-b954-b3d9f3ee5a6c'::uuid,
+        'b92e82c2-3399-47ab-9fe6-4d626a0d4567'::uuid,
+        'a3060a4f-fd23-4f1f-b040-66f50884a307'::uuid,
+        'fd8f57cc-2f76-41e5-a0ed-d3df1977e01e'::uuid,
+        '42764af1-7eb7-4f0c-9584-86c752e10a48'::uuid,
+        '437d52ff-69fa-4989-954d-f8454afc6b74'::uuid
     ],
     NOW(),
     NOW() + INTERVAL '7 days'
@@ -85,13 +157,17 @@ CREATE OR REPLACE FUNCTION SubmitAnswerToCompetitionProblem(
     pcompetitionid UUID,
     pproblemid UUID,
     puserid UUID,
-    pstatus INT
-) RETURNS INT
+    pstatus INT,
+    OUT pusername VARCHAR(255),
+    OUT score INT
+)
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    score INT;
 BEGIN
+
+    SELECT username INTO pusername FROM Users
+    WHERE id = puserid;
 
 MERGE INTO ProblemResults AS pr
 USING (SELECT pcompetitionid AS competitionId, pproblemid AS problemId, puserid AS userId) 
@@ -112,55 +188,6 @@ WHEN NOT MATCHED THEN
         AND userId = puserid
         AND status = 1;
 
-    RETURN score;
 END;
 $$;
 
--- create or replace PROCEDURE UpdatePassengerCount(
---     puserid UUID,
---     prideid UUID,
---     passenger_count INT
--- )
--- LANGUAGE plpgsql
--- AS $$
--- DECLARE
---     pass_count INT;
--- BEGIN
---     UPDATE rides
---     SET passengers = passenger_count,
---         updatedAt = NOW()
---     WHERE id = prideid
---         AND userid = puserid 
---         AND rideStatus = 0
---     RETURNING passengers INTO pass_count;
-
---     IF pass_count IS NULL OR pass_count != passenger_count THEN
---         RAISE EXCEPTION 'Ride cannot be updated. Either it does not exist or is not in a state that can be updated.';
---     END IF;
--- END;
--- $$;
-
-
--- create or replace PROCEDURE ActivateRide(
---     puserid UUID,
---     prideid UUID
--- )
--- LANGUAGE plpgsql
--- AS $$
--- DECLARE
---     ride_status INT;
-
--- BEGIN
---     UPDATE rides
---     SET rideStatus = 1,
---         updatedAt = NOW()
---     WHERE id = prideid
---         AND userid = puserid 
---         AND rideStatus = 0
---     RETURNING rideStatus INTO ride_status;
-
---     IF ride_status IS NULL OR ride_status != 1 THEN
---         RAISE EXCEPTION 'Ride cannot be activated. Either it does not exist or is not in a state that can be activated.';
---     END IF;
--- END;
--- $$;

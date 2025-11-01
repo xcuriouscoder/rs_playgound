@@ -27,11 +27,12 @@ async function getProblemById(problemId) {
 exports.getProblemById = getProblemById;
 
 async function submitProblemSolutionToStorage(userId, problemId, competitionId, status) {
-    const submitText = "SELECT SubmitAnswerToCompetitionProblem($1, $2, $3, $4)";
+    const submitText = "SELECT * FROM SubmitAnswerToCompetitionProblem($1, $2, $3, $4)";
     const submitValues = [competitionId, problemId, userId, status];
     const result = await pgPool.query(submitText, submitValues);
 //    console.log('Submission stored with running score: ' + JSON.stringify(result));
-    return result.rows[0].submitanswertocompetitionproblem;
+    return result.rows[0];
+//    return result.rows[0].submitanswertocompetitionproblem;
 }
 exports.submitProblemSolutionToStorage = submitProblemSolutionToStorage;
 

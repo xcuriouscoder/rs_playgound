@@ -56,24 +56,30 @@ app.post('/competitions/:competitionId/problems/:problemId/submit', async (req, 
     res.status(201).json({ message: 'Submission received' });
 });
 
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
 app.post('/results', async (req, res) => {
     console.log('Results posted ' + JSON.stringify(req.body));
     // Here you would process the webhook data and update your storage accordingly
 
-    const score = await submitProblemSolutionToStorage(
+    const result = await submitProblemSolutionToStorage(
         req.body.userId, 
         req.body.problemId, 
         req.body.competitionId,
         req.body.result);
 
-    await updateScoreInRedis(req.body.userId, req.body.competitionId, score);
+    console.log('Score calculated for user ' + result.pusername +  ' as ' + result.score);
 
-    console.log('Updated submission with score: ' + score);
+    await updateScoreInRedis(result.pusername, req.body.competitionId, (result.score + getRandomInt(50000)));
+
+    //console.log('Updated submission with score: ' + result.score);
 
     res.status(200).json({ message: 'Results received' });
 });
 
-app.get('/leaderboard/:competitionId', async (req, res) => {
+app.get('/competitions/:competitionId/leaderboard', async (req, res) => {
     // To be implemented: Fetch leaderboard from storage
     const leaders = await getTopScoresFromRedis(req.params.competitionId, 10);
 

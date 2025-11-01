@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -12,11 +13,16 @@ namespace ClientContestant
 {
     internal class ContestantActions
     {
+        private int SecondsToWaitBeforeRetryingSubmission = 3; // N seconds to wait before retrying a submission after an incorrect result is received.
+        private int SecondsToWaitBeforeCheckingResult = 1; // N seconds to wait before checking the result of a submission again when the status is pending.
         private HttpClient client;
         private string Username { get; set; }
         public string Email { get; }
 
         public Guid UserId { get; private set; }
+
+        int ContestantNumber = 0;
+        Random rand;
 
         private ContestantActions(HttpClient client)
         {
@@ -31,7 +37,7 @@ namespace ClientContestant
             this.Email = this.Username + "@example.com";
         }
 
-        internal async static Task<ContestantActions> CreateAsync(HttpClient client)
+        internal async static Task<ContestantActions> CreateAsync(HttpClient client, int contestantNumber, Random rand)
         {
             if (client == null)
             {
@@ -39,6 +45,10 @@ namespace ClientContestant
             }
 
             var contestantActions = new ContestantActions(client);
+
+            contestantActions.ContestantNumber = contestantNumber;
+            contestantActions.rand = rand ?? throw new ArgumentNullException(nameof(rand), "Random cannot be null.");
+
             await contestantActions.RegisterContestantAsync();
 
             return contestantActions;
@@ -134,6 +144,85 @@ userid: f626a46e-a037-4950-b3c0-502382968a28
             var content = await result.Content.ReadAsStringAsync();
             var jobj = JsonNode.Parse(content) as JsonObject;
             return int.Parse(jobj["status"].ToString());
+        }
+
+        internal async Task<List<LeaderScoreItem>> GetAllResultsForCompetitionAsync()
+        {
+            // GET http://localhost:3004/competitions/d1f5e8c3-3b6e-4f2a-9f4e-2b5c6d7e8f90/leaderboard
+
+            var result = await this.client.ContentWithHeadersAsync(
+                null,
+                "/competitions/d1f5e8c3-3b6e-4f2a-9f4e-2b5c6d7e8f90/leaderboard",
+                null,
+                HttpMethod.Get);
+            result.EnsureSuccessStatusCode();
+            var content = await result.Content.ReadAsStringAsync();
+            var leaders = JsonSerializer.Deserialize<List<LeaderScoreItem>>(content);
+            return leaders;
+        }
+
+        internal async Task DoContestAsync()
+        {
+            var problems = await GetProblemsAsync();
+            List<LeaderScoreItem> leaders;
+            int currentScore = 0;
+            int totalProblems = problems.Count;
+            foreach (var problemId in problems)
+            {
+                currentScore++;
+                Console.WriteLine($"**** C{this.ContestantNumber} currently working on problem {currentScore}/{totalProblems}");
+                int status;
+                do
+                {
+                    status = 0; // 0 = pending, 1 = correct, 2 = incorrect
+                    Console.WriteLine($"C{this.ContestantNumber}: Submitting code for problem {problemId}...");
+                    await SubmitCodeForProblemAsync(problemId, "print('Hello, World!')");
+
+                    while (status == 0)
+                    {
+                        Console.WriteLine($"C{this.ContestantNumber}: Getting result for problem {problemId}...");
+                        status = await GetResultForCompetitionProblemAsync(problemId);
+                        Console.WriteLine($"C{this.ContestantNumber}: Current status for problem {problemId}: {status}");
+                        if (status == 0)
+                        {
+                            Console.WriteLine("Result is still pending. Waiting for N seconds before checking again...");
+                            await Task.Delay(this.SecondsToWaitBeforeCheckingResult * rand.Next(900, 1000));
+                        }
+                    }
+
+                    if (status == 1)
+                    {
+                        Console.WriteLine($"C{this.ContestantNumber}: Submission for problem {problemId} is correct!");
+                    }
+                    else if (status == 2)
+                    {
+                        Console.WriteLine($"Submission for problem {problemId} is incorrect. Retrying...");
+                        await Task.Delay((this.SecondsToWaitBeforeRetryingSubmission + rand.Next(10)) * rand.Next(800, 1000)); // Wait for N seconds before retrying to simulate fixing the code and resubmitting. 
+                    }
+                } while (status != 1);
+
+                Console.WriteLine($"C{this.ContestantNumber}: Done with a problem, checking leaderboard.");
+
+                await GetAndWriteLeadersToConsole();
+            }
+
+            Console.WriteLine($"C{this.ContestantNumber}: Done with all problems, spamming leaderboard.");
+
+            for(int i = 0; i< 1000; i++)
+            {
+                Console.WriteLine($"C{this.ContestantNumber}: Getting leaderboard every 10s as spamming");
+                await GetAndWriteLeadersToConsole();
+                await Task.Delay(10000); // Small delay to avoid overwhelming the server.
+            }
+        }
+
+        private async Task<List<LeaderScoreItem>> GetAndWriteLeadersToConsole()
+        {
+            var leaders = await GetAllResultsForCompetitionAsync();
+            var top10 = leaders.OrderByDescending(l => l.score).Take(10).ToList();
+            var top10Str = string.Join("\r\n", top10.Select(l => $"{l.value} ({l.score})"));
+            Console.WriteLine($"C{this.ContestantNumber}: Top 10 leaderboard: \r\n{top10Str}");
+            return leaders;
         }
     }
 }

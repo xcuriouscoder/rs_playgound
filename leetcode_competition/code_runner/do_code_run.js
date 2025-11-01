@@ -1,3 +1,4 @@
+const { get } = require("http");
 const { postResults } = require("./post_results");
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
@@ -19,13 +20,13 @@ async function processCodeSubmission(topic, partition, message, threadNumber) {
     console.log(`Decoded Code: ${decodedString}`);
 
     // Here you would add the logic to compile and run the code submission
-    const delayTime = getRandomInt(10) * 1000;
+    const delayTime = getRandomInt(5) * getRandomInt(1000);
     console.log(`*** Thread ${threadNumber} Simulating code processing for ${delayTime} ms...`);
     await delay(delayTime); // Simulate code processing time
 
     console.log(`Completed processing submission for User: ${submission.userid}, Competition: ${submission.competitionid}, Problem: ${submission.problemid}`);
 
-    const success = getRandomInt(2) === 1;
+    const success = getRandomInt(100) < 85; // Simulate an 85% success rate for code execution
     console.log(`Submission Result: ${success ? "Success" : "Failure"}`);
 
     const wasSent = await postResults(
