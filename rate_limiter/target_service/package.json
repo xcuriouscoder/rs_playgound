@@ -1,0 +1,17 @@
+{
+  "name": "target_service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "throttled_webserver.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "express": "^5.1.0",
+    "redis": "^5.9.0"
+  }
+}
