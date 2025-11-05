@@ -1,24 +1,45 @@
 services:
-    # db:
-    #   image: postgres:latest
-    #   environment:
-    #     POSTGRES_USER: ${POSTGRES_USER}
-    #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    #     POSTGRES_DB: ${POSTGRES_DB}
-    #   volumes:
-    #     - ./storage/Schema.sql:/docker-entrypoint-initdb.d/init.sql
-    #   ports:
-    #     - "5531:5432"
     redis:    
-        image: redis:latest    
-
+        image: redis:latest
+    influxdb:
+        image: influxdb:latest
+        ports:
+             - "8086:8086"
+        environment:
+              - DOCKER_INFLUXDB_INIT_MODE=setup
+              - DOCKER_INFLUXDB_INIT_ORG=rate_limiter_org
+              - DOCKER_INFLUXDB_INIT_BUCKET=rate_limiter_metrics
+              - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_USER}
+              - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_PASS}
+    # cassandra:
+    #     image: cassandra:latest
+    #     ports:
+    #          - "9042:9042"
+    #     volumes:
+    #          - "./Cassandra/init.cql:/docker-entrypoint-initdb.d"
+    #     environment:
+    #       - CASSANDRA_USER=admin
+    #       - CASSANDRA_PASSWORD=admin
     webapi:
         image: rate-limited-svc
-        # depends_on:      
-        #      redis:
-        #         condition: service_started
+        depends_on:     
+             redis:
+                condition: service_started
+             influxdb:
+                condition: service_started
         ports:      
              - "3010:3010"
-        # environment:      
-        #     - REDIS_HOST=redis
+        environment:
+              - INFLUXDB_TOKEN=${INFLUXTOKEN}
+
+    grafana:
+        image: grafana/grafana:latest
+        ports:
+             - "3011:3000"
+        environment:
+             - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+             - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASS}
+        depends_on:
+             influxdb:
+                 condition: service_started
 

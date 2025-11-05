@@ -2,15 +2,17 @@ const express = require('express');
 const app = express();
 
 const redis = require("redis");
+const { logMetricsToInfluxDB, queryMetricsFromInfluxDB, queryMetricsFromInfluxDBInMinuteBuckets } = require('./influxdb_proxy');
 
 const port = process.env.PORT || 3010;
-//const RedisHost = process.env.REDIS_HOST || 'localhost';
 const RedisUrl = `redis://redis:6379`;
 const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
 
+const MaxPerMinute = 10;
+
 app.use(express.json());
 
-app.listen(port, () => {
+app.listen(port, async () => {
     console.log(`Rate Server listening on port ${port}`);
     redistClient.connect();
 });
@@ -20,21 +22,30 @@ app.get('/', async (req, res) => {
     console.log('Rate limit webserver root called');
 
     const userid = req.headers.userid;
+    let statusCode = 200;
+    const rltype = req.body.rateLimitType;
 
-    if(userid.startsWith('sliding')) {
-        await slidingWindowThrottle(req, res);
-    } else { 
-        if(userid.startsWith('fixed')) {
-            await fixedWindowThrottle(req, res);
-        } else {
-            await tokenBucketThrottle(req, res);
-        }
-    }        
-    
+    switch(rltype) {
+        case 'sliding':
+            statusCode = await slidingWindowThrottle(req, res);
+            await logMetricsToInfluxDB('sliding', statusCode);
+            break;
+        case 'fixed':
+            statusCode = await fixedWindowThrottle(req, res);
+            await logMetricsToInfluxDB('fixed', statusCode);
+            break;
+        default:
+        case 'token':
+            statusCode = await tokenBucketThrottle(req, res);
+            await logMetricsToInfluxDB('token', statusCode);
+            break;
+    }
+
+    // const logs = await queryMetricsFromInfluxDBInMinuteBuckets(rltype);
+    // console.log(`InfluxDB logs for rate limiter ${rltype}: ${JSON.stringify(logs)}`);
 });
 
 async function fixedWindowThrottle(req, res) {
-    const MaxPerMinute = 10;
 
     const userid = req.headers.userid;
     const datetime = new Date();
@@ -52,14 +63,15 @@ async function fixedWindowThrottle(req, res) {
     if(current > MaxPerMinute) {
         console.log(`User ${userid} has exceeded the rate limit with count ${current}`);
         res.status(429).send({ message: 'Too Many Requests - Fixed limit exceeded' });
+        return 429;
     } else {
         console.log(`User ${userid} is within the rate limit with count ${current}`);
         res.status(201).send({ message: 'Fixed Request successful' });
+        return 201;
     }
 }
 
 async function slidingWindowThrottle(req, res) {
-    const MaxPerMinute = 10;
 
     const userid = req.headers.userid;
     const datetime = new Date();
@@ -84,9 +96,11 @@ async function slidingWindowThrottle(req, res) {
     if(totalCount > MaxPerMinute) {
         console.log(`User ${userid} has exceeded the rate limit with count ${totalCount}`);
         res.status(429).send({ message: 'Too Many Requests - Sliding limit exceeded' });
+        return 429;
     } else {
         console.log(`User ${userid} is within the rate limit with count ${totalCount}`);
         res.status(201).send({ message: 'Sliding Request successful' });
+        return 201;
     }
 }
 
@@ -128,7 +142,6 @@ return allowed
 `;
 
 async function tokenBucketThrottle(req, res) {
-    const MaxTokens = 10;
     const RefillRatePerSecond = 1;
 
     const userid = req.headers.userid;
@@ -139,7 +152,7 @@ async function tokenBucketThrottle(req, res) {
     console.log(`Token Bucket Throttle check for user ${userid} with key ${redisKey}`);
     const allowed = await redistClient.eval(luaScript, {
         keys: [redisKey],
-        arguments: [MaxTokens.toString(), RefillRatePerSecond.toString(), Date.now().toString()]
+        arguments: [MaxPerMinute.toString(), RefillRatePerSecond.toString(), Date.now().toString()]
     });
 
     console.log(`Token Bucket Throttle eval result for user ${userid}: ${allowed}`);
@@ -147,9 +160,11 @@ async function tokenBucketThrottle(req, res) {
     if(allowed) {
         console.log(`User ${userid} is within the token bucket rate limit`);
         res.status(201).send({ message: 'Token Request successful' });
+        return 201;
     } else {
         console.log(`User ${userid} has exceeded the token bucket rate limit`);
-        res.status(429).send({ message: 'Too Many Requests - Toekn Rate limit exceeded' });
+        res.status(429).send({ message: 'Too Many Requests - Token Rate limit exceeded' });
+        return 429;
     }
 }
 

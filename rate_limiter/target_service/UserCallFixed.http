@@ -1,0 +1,7 @@
+GET http://localhost:3010/
+content-type: application/json
+userid: tokenuser1
+
+{
+    "rateLimitType": "fixed"
+}
