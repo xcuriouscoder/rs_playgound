@@ -8,7 +8,7 @@ const port = process.env.PORT || 3010;
 const RedisUrl = `redis://redis:6379`;
 const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
 
-const MaxPerMinute = 10;
+const MaxPerMinute = 100;
 
 app.use(express.json());
 
