@@ -8,10 +8,10 @@ async function rateLimitedRequest(ratelimit_method) {
     try {
         const result = await superagent.get('http://localhost:3010/').send(data);
 
-        return result.status;
+        return result;
     } catch (err) {
 //        console.error(err.status);
-        return err.status;
+        return err;
     }
 }
 exports.rateLimitedRequest = rateLimitedRequest;

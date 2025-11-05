@@ -9,6 +9,8 @@ const RedisUrl = `redis://redis:6379`;
 const redistClient = redis.createClient({ url : RedisUrl });//  = createClient();
 
 const MaxPerMinute = 100;
+const RateLimitDelayHeaderName = "X-RateLimit-MSToDelay"
+const RemainingRequestsHeaderName = "X-RateLimit-RemainingRequests"
 
 app.use(express.json());
 
@@ -59,13 +61,18 @@ async function fixedWindowThrottle(req, res) {
     if(current === 1) {
         await redistClient.expire(redisKey, 60); // Set TTL of 60 seconds
     }
+    
+    const delayNeeded = (60 - (datetime.getSeconds())) * 1000;
+    res.setHeader(RateLimitDelayHeaderName, delayNeeded);
 
     if(current > MaxPerMinute) {
         console.log(`User ${userid} has exceeded the rate limit with count ${current}`);
         res.status(429).send({ message: 'Too Many Requests - Fixed limit exceeded' });
+        res.setHeader(RemainingRequestsHeaderName, 0);
         return 429;
     } else {
         console.log(`User ${userid} is within the rate limit with count ${current}`);
+        res.setHeader(RemainingRequestsHeaderName, MaxPerMinute - current);
         res.status(201).send({ message: 'Fixed Request successful' });
         return 201;
     }
@@ -94,11 +101,17 @@ async function slidingWindowThrottle(req, res) {
     const totalCount = current + weightedPrevCount;
 
     if(totalCount > MaxPerMinute) {
+        const delayNeeded = (totalCount - MaxPerMinute) * (MaxPerMinute / 60.0) * 1000;
         console.log(`User ${userid} has exceeded the rate limit with count ${totalCount}`);
+        res.setHeader(RateLimitDelayHeaderName, delayNeeded);
+        res.setHeader(RemainingRequestsHeaderName, 0);
         res.status(429).send({ message: 'Too Many Requests - Sliding limit exceeded' });
         return 429;
     } else {
         console.log(`User ${userid} is within the rate limit with count ${totalCount}`);
+        const delayNeeded = Math.min(totalCount * (MaxPerMinute/60) * 1000, 60000);
+        res.setHeader(RateLimitDelayHeaderName, delayNeeded);
+        res.setHeader(RemainingRequestsHeaderName, Math.floor(MaxPerMinute - totalCount));
         res.status(201).send({ message: 'Sliding Request successful' });
         return 201;
     }
@@ -138,31 +151,34 @@ end
 
 redis.call('EXPIRE', key, 3600)
 
-return allowed
+return {allowed, currTokens}
 `;
 
 async function tokenBucketThrottle(req, res) {
     const RefillRatePerSecond = 1;
 
     const userid = req.headers.userid;
-    const redisKey = `token_bucket_${userid}`;
+    const redisKey = `token_bucket_global`;
 
     console.log(`Date.now(): ${Date.now()} and /1000 gives ${Math.floor((Date.now()/1000.0))}`);
 
-    console.log(`Token Bucket Throttle check for user ${userid} with key ${redisKey}`);
-    const allowed = await redistClient.eval(luaScript, {
+    console.log(`Token Bucket Throttle check for user with key ${redisKey}`);
+    const result = await redistClient.eval(luaScript, {
         keys: [redisKey],
         arguments: [MaxPerMinute.toString(), RefillRatePerSecond.toString(), Date.now().toString()]
     });
 
-    console.log(`Token Bucket Throttle eval result for user ${userid}: ${allowed}`);
+    console.log(`Token Bucket Throttle eval result for user: ${JSON.stringify(result)}`);
+    res.setHeader(RateLimitDelayHeaderName, 1100);
 
-    if(allowed) {
-        console.log(`User ${userid} is within the token bucket rate limit`);
+    if(result[0]) {
+        console.log(`User is within the token bucket rate limit`);
+        res.setHeader(RemainingRequestsHeaderName, result[1]);
         res.status(201).send({ message: 'Token Request successful' });
         return 201;
     } else {
-        console.log(`User ${userid} has exceeded the token bucket rate limit`);
+        console.log(`User has exceeded the token bucket rate limit`);
+        res.setHeader(RemainingRequestsHeaderName, 0);
         res.status(429).send({ message: 'Too Many Requests - Token Rate limit exceeded' });
         return 429;
     }
